@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OS DevRel Progress Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1a1a1a;
+      --bg-card: #242424;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-red: #ef4444;
+      --accent-blue: #3b82f6;
+      --accent-purple: #a855f7;
+      --border-color: #333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .date-info {
+      margin-top: 1rem;
+      color: var(--accent-blue);
+      font-size: 0.9rem;
+    }
+
+    /* Quarter Selector */
+    .quarter-selector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .quarter-selector label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .quarter-select {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+      min-width: 150px;
+    }
+
+    .quarter-select:hover {
+      border-color: var(--accent-blue);
+    }
+
+    .quarter-select:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .refresh-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .refresh-btn:hover {
+      background: var(--bg-card);
+      border-color: var(--accent-blue);
+    }
+
+    .refresh-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .refresh-btn.loading {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .cache-status {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-left: 0.5rem;
+    }
+
+    .cache-status.cached {
+      color: var(--accent-green);
+    }
+
+    .cache-status.fresh {
+      color: var(--accent-blue);
+    }
+
+    .auto-refresh-timer {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-left: 0.5rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .tab:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: white;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .summary-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .summary-card .value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .summary-card .label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .summary-card.on-track .value { color: var(--accent-green); }
+    .summary-card.at-risk .value { color: var(--accent-yellow); }
+    .summary-card.behind .value { color: var(--accent-red); }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .category-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .category-icon.build { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .category-icon.videos { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .category-icon.blogs { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .category-icon.livestreams { background: linear-gradient(135deg, #a855f7, #9333ea); }
+    .category-icon.speaking { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .category-icon.community { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+    .category-icon.docs { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+
+    .category-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .deliverable {
+      margin-bottom: 1.25rem;
+    }
+
+    .deliverable:last-child {
+      margin-bottom: 0;
+    }
+
+    .deliverable-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .deliverable-name {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .deliverable-count {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-fill.on-track { background: var(--accent-green); }
+    .progress-fill.at-risk { background: var(--accent-yellow); }
+    .progress-fill.behind { background: var(--accent-red); }
+    .progress-fill.as-needed { background: var(--accent-blue); }
+    .progress-fill.not-started { background: var(--text-secondary); }
+    .progress-fill.pending { background: var(--accent-purple); }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .status-badge.on-track { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+    .status-badge.at-risk { background: rgba(234, 179, 8, 0.2); color: var(--accent-yellow); }
+    .status-badge.behind { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+    .status-badge.as-needed { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    .status-badge.not-started { background: rgba(160, 160, 160, 0.2); color: var(--text-secondary); }
+    .status-badge.pending { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+
+    .tasks-toggle {
+      background: none;
+      border: none;
+      color: var(--accent-blue);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .tasks-toggle:hover {
+      text-decoration: underline;
+    }
+
+    .tasks-list {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .tasks-list.show {
+      display: block;
+    }
+
+    .task-item {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .task-item:last-child {
+      border-bottom: none;
+    }
+
+    .task-name {
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .task-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.2rem;
+    }
+
+    .task-assignee {
+      color: var(--accent-purple);
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .task-collaborators {
+      color: var(--accent-blue);
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .task-date {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      text-align: center;
+      padding: 2rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--accent-red);
+      border-radius: 12px;
+      color: var(--accent-red);
+    }
+
+    .no-tasks {
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+
+    /* Agentic Patterns Grouped Styles */
+    .patterns-list {
+      margin-top: 0.75rem;
+    }
+
+    .pattern-group {
+      margin-bottom: 0.5rem;
+    }
+
+    .pattern-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .pattern-toggle {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .pattern-toggle:hover {
+      background: var(--bg-card);
+      border-color: var(--accent-blue);
+    }
+
+    .pattern-name {
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .pattern-count {
+      color: var(--accent-blue);
+      font-size: 0.8rem;
+    }
+
+    .pattern-tasks {
+      margin-top: 0.5rem;
+      margin-left: 1rem;
+      border-left: 2px solid var(--accent-blue);
+      padding-left: 0.75rem;
+    }
+
+    .pattern-tasks .task-item {
+      padding: 0.4rem 0;
+    }
+
+    .pattern-tasks .task-name {
+      font-size: 0.8rem;
+    }
+
+    /* Documentation Full-Width Card */
+    .category-card.documentation-card {
+      grid-column: 1 / -1; /* Span full width */
+    }
+
+    /* Documentation Two-Column Layout */
+    .docs-two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .docs-column {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .docs-column-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .docs-column-header .column-icon {
+      font-size: 1.1rem;
+    }
+
+    .docs-column-header .column-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .docs-column-header .column-count {
+      margin-left: auto;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+    }
+
+    .docs-column.open .column-count {
+      background: rgba(234, 179, 8, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    .docs-column.completed .column-count {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--accent-green);
+    }
+
+    .docs-task-list {
+      /* No max-height restriction - show all items */
+    }
+
+    .docs-task-item {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+
+    .docs-task-item:last-child {
+      border-bottom: none;
+    }
+
+    .docs-task-item .task-name {
+      color: var(--text-primary);
+      display: block;
+      margin-bottom: 0.35rem;
+      line-height: 1.4;
+    }
+
+    .docs-task-item .task-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .docs-task-item .task-assignee {
+      color: var(--accent-purple);
+    }
+
+    .docs-task-item .task-date {
+      color: var(--text-secondary);
+    }
+
+    .docs-task-item .task-due {
+      color: var(--accent-yellow);
+    }
+
+    .docs-task-item .task-due.overdue {
+      color: var(--accent-red);
+    }
+
+    .docs-empty {
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 2rem 0;
+    }
+
+    .docs-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .docs-header-row .deliverable-name {
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .docs-header-row .status-badge {
+      margin-left: auto;
+    }
+
+    @media (max-width: 768px) {
+      .docs-two-column {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quarter-selector {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎯 OS DevRel Progress Tracker</h1>
+      <p class="subtitle" id="quarterTitle">Loading...</p>
+      <p class="date-info" id="dateInfo">Loading...</p>
+    </header>
+
+    <div class="quarter-selector">
+      <label for="quarterSelect">Select Quarter:</label>
+      <select id="quarterSelect" class="quarter-select">
+        <option value="">Loading quarters...</option>
+      </select>
+      <button id="refreshBtn" class="refresh-btn" title="Refresh data from Asana">
+        🔄 Refresh
+      </button>
+      <span id="cacheStatus" class="cache-status"></span>
+      <span id="autoRefreshTimer" class="auto-refresh-timer"></span>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <!-- Tabs will be dynamically generated -->
+    </div>
+
+    <div id="summaryCards" class="summary-cards"></div>
+
+    <div id="content" class="categories-grid">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading progress data from Asana...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let progressData = null;
+    let quartersData = null;
+    let currentQuarter = null;
+    let currentView = 'quarterly';
+    let availableMonths = [];
+
+    const CATEGORY_ICONS = {
+      'Build': { icon: '🔨', class: 'build' },
+      'Videos': { icon: '🎬', class: 'videos' },
+      'Blogs': { icon: '✍️', class: 'blogs' },
+      'Livestreams': { icon: '📺', class: 'livestreams' },
+      'Public Speaking': { icon: '🎙️', class: 'speaking' },
+      'Community': { icon: '👥', class: 'community' },
+      'Documentation': { icon: '📚', class: 'docs' },
+    };
+
+    // Get default view based on current month
+    function getDefaultView(months) {
+      const now = new Date();
+      const currentMonthName = now.toLocaleString('default', { month: 'long' });
+      
+      // Check if current month is in this quarter's months
+      if (months && months.includes(currentMonthName)) {
+        return currentMonthName.toLowerCase();
+      }
+      return 'quarterly';
+    }
+
+    // Check if a month has started yet
+    function hasMonthStarted(view, quarterMonths) {
+      if (view === 'quarterly') return true;
+      
+      const now = new Date();
+      const currentMonthName = now.toLocaleString('default', { month: 'long' });
+      const currentMonthIndex = quarterMonths.indexOf(currentMonthName);
+      const viewMonthIndex = quarterMonths.findIndex(m => m.toLowerCase() === view);
+      
+      if (viewMonthIndex === -1) return true;
+      return currentMonthIndex >= viewMonthIndex;
+    }
+
+    // Calculate expected progress based on current date
+    function getExpectedProgress(view, quarterMonths) {
+      const now = new Date();
+      const dayOfMonth = now.getDate();
+      const currentMonthName = now.toLocaleString('default', { month: 'long' });
+      
+      if (view === 'quarterly') {
+        const currentMonthIndex = quarterMonths.indexOf(currentMonthName);
+        if (currentMonthIndex === -1) return 1; // Past this quarter
+        
+        const progressPerMonth = 1 / quarterMonths.length;
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const monthProgress = dayOfMonth / daysInMonth;
+        
+        return (currentMonthIndex * progressPerMonth) + (monthProgress * progressPerMonth);
+      } else {
+        // Monthly progress
+        const viewMonthIndex = quarterMonths.findIndex(m => m.toLowerCase() === view);
+        const currentMonthIndex = quarterMonths.indexOf(currentMonthName);
+        
+        if (currentMonthIndex < viewMonthIndex) {
+          return 0; // Month hasn't started
+        } else if (currentMonthIndex > viewMonthIndex) {
+          return 1; // Month is over
+        } else {
+          const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          return dayOfMonth / daysInMonth;
+        }
+      }
+    }
+
+    // Check if we're in the last week of the month
+    function isLastWeekOfMonth() {
+      const now = new Date();
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const dayOfMonth = now.getDate();
+      return dayOfMonth > (daysInMonth - 7); // Last 7 days of month
+    }
+
+    // Check if a deliverable is an end-of-month type
+    function isEndOfMonthDeliverable(deliverable) {
+      const endOfMonthDeliverables = progressData?.endOfMonthDeliverables || [];
+      return endOfMonthDeliverables.includes(deliverable);
+    }
+
+    function getStatus(completed, goal, view, deliverable = null) {
+      if (goal === null) return 'as-needed';
+      if (goal === 0) return completed >= 0 ? 'on-track' : 'on-track';
+      
+      // If the month hasn't started yet, show "not-started" status
+      if (!hasMonthStarted(view, availableMonths)) {
+        return 'not-started';
+      }
+      
+      const progress = completed / goal;
+      
+      // If goal is already met, always on-track
+      if (progress >= 1) return 'on-track';
+      
+      // For end-of-month deliverables in monthly view, show "pending" until last week
+      if (view !== 'quarterly' && deliverable && isEndOfMonthDeliverable(deliverable)) {
+        if (!isLastWeekOfMonth()) {
+          return 'pending';
+        }
+        // In last week: if still 0, show behind; otherwise at-risk
+        if (completed === 0) return 'behind';
+        return 'at-risk';
+      }
+      
+      const expected = getExpectedProgress(view, availableMonths);
+      
+      if (progress >= expected * 0.8) return 'on-track';
+      if (progress >= expected * 0.5) return 'at-risk';
+      return 'behind';
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function renderSummary(goals, progress, view) {
+      let onTrack = 0, atRisk = 0, behind = 0, pending = 0, notStarted = 0, total = 0;
+      
+      for (const [category, deliverables] of Object.entries(goals)) {
+        for (const [deliverable, goal] of Object.entries(deliverables)) {
+          if (goal === null) continue;
+          total++;
+          const completed = progress[category]?.[deliverable]?.completed || 0;
+          const status = getStatus(completed, goal, view, deliverable);
+          if (status === 'on-track') onTrack++;
+          else if (status === 'at-risk') atRisk++;
+          else if (status === 'behind') behind++;
+          else if (status === 'pending') pending++;
+          else if (status === 'not-started') notStarted++;
+        }
+      }
+
+      if (!hasMonthStarted(view, availableMonths)) {
+        return `
+          <div class="summary-card" style="grid-column: 1 / -1;">
+            <div class="value" style="color: var(--text-secondary);">📅</div>
+            <div class="label">This month hasn't started yet</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="summary-card on-track">
+          <div class="value">${onTrack}</div>
+          <div class="label">On Track</div>
+        </div>
+        <div class="summary-card at-risk">
+          <div class="value">${atRisk}</div>
+          <div class="label">At Risk</div>
+        </div>
+        <div class="summary-card behind">
+          <div class="value">${behind}</div>
+          <div class="label">Behind</div>
+        </div>
+        ${pending > 0 ? `
+        <div class="summary-card" style="--accent-color: var(--accent-purple);">
+          <div class="value" style="color: var(--accent-purple);">${pending}</div>
+          <div class="label">Pending</div>
+        </div>
+        ` : ''}
+        <div class="summary-card">
+          <div class="value">${total}</div>
+          <div class="label">Total Goals</div>
+        </div>
+      `;
+    }
+
+    // Render agentic patterns grouped by pattern name
+    function renderAgenticPatternsGrouped(deliverableId, progressData) {
+      const tasks = progressData.tasks || [];
+      const patternsFound = progressData.patternsFound || [];
+      
+      if (patternsFound.length === 0) {
+        return `<p class="no-tasks">No agentic patterns covered yet</p>`;
+      }
+      
+      // Group tasks by pattern
+      const patternGroups = {};
+      for (const pattern of patternsFound) {
+        patternGroups[pattern] = [];
+      }
+      
+      for (const task of tasks) {
+        const patterns = task.agenticPatterns || [];
+        for (const pattern of patterns) {
+          if (patternGroups[pattern]) {
+            patternGroups[pattern].push(task);
+          }
+        }
+      }
+      
+      // Sort patterns alphabetically
+      const sortedPatterns = Object.keys(patternGroups).sort();
+      
+      let html = `<div class="patterns-list">`;
+      
+      for (const pattern of sortedPatterns) {
+        const patternTasks = patternGroups[pattern];
+        const patternId = `${deliverableId}-${pattern}`.replace(/\s+/g, '-').toLowerCase();
+        
+        html += `
+          <div class="pattern-group">
+            <button class="pattern-toggle" onclick="toggleTasks('${patternId}')">
+              <span class="pattern-name">🎯 ${pattern}</span>
+              <span class="pattern-count">${patternTasks.length} content piece${patternTasks.length !== 1 ? 's' : ''} ▼</span>
+            </button>
+            <div id="tasks-${patternId}" class="tasks-list pattern-tasks">
+              ${patternTasks.map(task => `
+                <div class="task-item">
+                  <span class="task-name">${task.name}</span>
+                  <div class="task-meta">
+                    <span class="task-assignee">${task.assignee || 'Unassigned'}${task.collaborators && task.collaborators.length > 0 ? ` <span class="task-collaborators">+ ${task.collaborators.join(', ')}</span>` : ''}</span>
+                    <span class="task-date">${formatDate(task.completed_at)}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      html += `</div>`;
+      return html;
+    }
+
+    // Render Documentation with two-column layout (Open vs Completed)
+    function renderDocumentationTwoColumn(completedTasks) {
+      const openTasks = progressData.openDocumentation || [];
+      
+      // Check if a due date is overdue
+      function isOverdue(dueOn) {
+        if (!dueOn) return false;
+        const due = new Date(dueOn);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return due < today;
+      }
+      
+      // Render open tasks column - show all items
+      let openHtml = '';
+      if (openTasks.length === 0) {
+        openHtml = `<p class="docs-empty">No open tickets 🎉</p>`;
+      } else {
+        openHtml = `<div class="docs-task-list">`;
+        for (const task of openTasks) {
+          const dueClass = task.due_on ? (isOverdue(task.due_on) ? 'task-due overdue' : 'task-due') : 'task-date';
+          const dueText = task.due_on ? `Due ${formatDate(task.due_on)}` : 'No due date';
+          openHtml += `
+            <div class="docs-task-item">
+              <span class="task-name">${task.name}</span>
+              <div class="task-meta">
+                <span class="task-assignee">${task.assignee}</span>
+                <span class="${dueClass}">${dueText}</span>
+              </div>
+            </div>
+          `;
+        }
+        openHtml += `</div>`;
+      }
+      
+      // Render completed tasks column - show all items
+      let completedHtml = '';
+      if (completedTasks.length === 0) {
+        completedHtml = `<p class="docs-empty">No completed docs yet</p>`;
+      } else {
+        completedHtml = `<div class="docs-task-list">`;
+        for (const task of completedTasks) {
+          completedHtml += `
+            <div class="docs-task-item">
+              <span class="task-name">${task.name}</span>
+              <div class="task-meta">
+                <span class="task-assignee">${task.assignee}</span>
+                <span class="task-date">${formatDate(task.completed_at)}</span>
+              </div>
+            </div>
+          `;
+        }
+        completedHtml += `</div>`;
+      }
+      
+      return `
+        <div class="deliverable">
+          <div class="docs-header-row">
+            <span class="deliverable-name">Docs</span>
+            <span class="status-badge as-needed">As Needed</span>
+          </div>
+          <div class="docs-two-column">
+            <div class="docs-column open">
+              <div class="docs-column-header">
+                <span class="column-icon">🟡</span>
+                <span class="column-title">Open</span>
+                <span class="column-count">${openTasks.length}</span>
+              </div>
+              ${openHtml}
+            </div>
+            <div class="docs-column completed">
+              <div class="docs-column-header">
+                <span class="column-icon">✅</span>
+                <span class="column-title">Completed</span>
+                <span class="column-count">${completedTasks.length}</span>
+              </div>
+              ${completedHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCategories(goals, progress, view) {
+      let html = '';
+      
+      for (const [category, deliverables] of Object.entries(goals)) {
+        const iconData = CATEGORY_ICONS[category] || { icon: '📋', class: 'docs' };
+        const isDocCategory = category === 'Documentation';
+        
+        html += `
+          <div class="category-card${isDocCategory ? ' documentation-card' : ''}">
+            <div class="category-header">
+              <div class="category-icon ${iconData.class}">${iconData.icon}</div>
+              <h2 class="category-title">${category}</h2>
+            </div>
+        `;
+        
+        for (const [deliverable, goal] of Object.entries(deliverables)) {
+          const completed = progress[category]?.[deliverable]?.completed || 0;
+          const tasks = progress[category]?.[deliverable]?.tasks || [];
+          const status = getStatus(completed, goal, view, deliverable);
+          const percentage = goal === null ? 100 : (goal === 0 ? 100 : Math.min((completed / goal) * 100, 100));
+          const deliverableId = `${category}-${deliverable}`.replace(/\s+/g, '-').toLowerCase();
+          
+          // Special handling for "Agentic patterns owned" - group by pattern
+          const isAgenticPatterns = deliverable === 'Agentic patterns owned';
+          
+          // Special handling for Documentation "Docs" - two-column layout
+          const isDocumentation = category === 'Documentation' && deliverable === 'Docs';
+          
+          if (isDocumentation) {
+            html += renderDocumentationTwoColumn(tasks);
+          } else {
+            html += `
+              <div class="deliverable">
+                <div class="deliverable-header">
+                  <span class="deliverable-name">${deliverable}</span>
+                  <span class="deliverable-count">
+                    ${completed}${goal !== null ? ` / ${goal}` : ''}
+                    <span class="status-badge ${status}">${status === 'as-needed' ? 'As Needed' : status.replace('-', ' ')}</span>
+                  </span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill ${status}" style="width: ${percentage}%"></div>
+                </div>
+                ${isAgenticPatterns ? 
+                  renderAgenticPatternsGrouped(deliverableId, progress[category][deliverable]) :
+                  (tasks.length > 0 ? `
+                    <button class="tasks-toggle" onclick="toggleTasks('${deliverableId}')">
+                      View ${tasks.length} completed task${tasks.length !== 1 ? 's' : ''} ▼
+                    </button>
+                    <div id="tasks-${deliverableId}" class="tasks-list">
+                      ${tasks.map(task => `
+                        <div class="task-item">
+                          <span class="task-name">${task.name}</span>
+                          <div class="task-meta">
+                            <span class="task-assignee">${task.assignee || 'Unassigned'}${task.collaborators && task.collaborators.length > 0 ? ` <span class="task-collaborators">+ ${task.collaborators.join(', ')}</span>` : ''}</span>
+                            <span class="task-date">${formatDate(task.completed_at)}</span>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : `<p class="no-tasks">No completed tasks yet</p>`)
+                }
+              </div>
+            `;
+          }
+        }
+        
+        html += '</div>';
+      }
+      
+      return html;
+    }
+
+    function toggleTasks(id) {
+      const tasksList = document.getElementById(`tasks-${id}`);
+      tasksList.classList.toggle('show');
+      
+      const button = tasksList.previousElementSibling;
+      if (tasksList.classList.contains('show')) {
+        button.innerHTML = button.innerHTML.replace('▼', '▲');
+      } else {
+        button.innerHTML = button.innerHTML.replace('▲', '▼');
+      }
+    }
+
+    function renderTabs() {
+      const tabsEl = document.getElementById('tabs');
+      
+      let html = `<button class="tab ${currentView === 'quarterly' ? 'active' : ''}" data-view="quarterly">${progressData.quarterName} Quarterly</button>`;
+      
+      for (const month of availableMonths) {
+        const monthLower = month.toLowerCase();
+        html += `<button class="tab ${currentView === monthLower ? 'active' : ''}" data-view="${monthLower}">${month}</button>`;
+      }
+      
+      tabsEl.innerHTML = html;
+      
+      // Re-attach event listeners
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentView = tab.dataset.view;
+          renderView();
+        });
+      });
+    }
+
+    function renderView() {
+      if (!progressData) return;
+      
+      const summaryEl = document.getElementById('summaryCards');
+      const contentEl = document.getElementById('content');
+      
+      let goals, progress;
+      
+      if (currentView === 'quarterly') {
+        goals = progressData.quarterly.goals;
+        progress = progressData.quarterly.progress;
+      } else {
+        const monthName = currentView.charAt(0).toUpperCase() + currentView.slice(1);
+        goals = progressData.monthly.goals[monthName];
+        progress = progressData.monthly.progress[monthName];
+      }
+      
+      if (!goals || !progress) {
+        contentEl.innerHTML = `<div class="error">No data available for this view</div>`;
+        return;
+      }
+      
+      summaryEl.innerHTML = renderSummary(goals, progress, currentView);
+      contentEl.innerHTML = renderCategories(goals, progress, currentView);
+    }
+
+    async function fetchQuarters() {
+      try {
+        const response = await fetch('/api/quarters');
+        quartersData = await response.json();
+        
+        const select = document.getElementById('quarterSelect');
+        select.innerHTML = quartersData.quarters.map(q => 
+          `<option value="${q.id}" ${q.id === quartersData.current ? 'selected' : ''}>${q.name}</option>`
+        ).join('');
+        
+        currentQuarter = quartersData.current;
+        
+        // Add change listener
+        select.addEventListener('change', async (e) => {
+          currentQuarter = e.target.value;
+          await fetchProgress(currentQuarter);
+        });
+        
+        return quartersData.current;
+      } catch (error) {
+        console.error('Error fetching quarters:', error);
+        return null;
+      }
+    }
+
+    async function fetchProgress(quarterId) {
+      try {
+        document.getElementById('content').innerHTML = `
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading progress data from Asana...</p>
+          </div>
+        `;
+        
+        const response = await fetch(`/api/progress/${quarterId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        progressData = await response.json();
+        
+        // Update available months
+        availableMonths = progressData.monthly.months || [];
+        
+        // Update title
+        document.getElementById('quarterTitle').textContent = `${progressData.quarterName} Goals & Deliverables`;
+        
+        // Update date info
+        const dateInfo = document.getElementById('dateInfo');
+        const currentDate = new Date(progressData.currentDate);
+        dateInfo.textContent = `Last updated: ${currentDate.toLocaleString()} | Current Month: ${progressData.currentMonth}`;
+        
+        // Set default view to current month if in this quarter
+        currentView = getDefaultView(availableMonths);
+        
+        // Render tabs and view
+        renderTabs();
+        renderView();
+        updateCacheStatus();
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+        document.getElementById('content').innerHTML = `
+          <div class="error">
+            <h3>Error loading data</h3>
+            <p>${error.message}</p>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">
+              Make sure the ASANA_TOKEN is set in your .env file and the server is running.
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    // Update cache status display
+    function updateCacheStatus() {
+      const cacheStatusEl = document.getElementById('cacheStatus');
+      if (progressData && progressData.cached) {
+        const ageSeconds = Math.round((progressData.cacheAge || 0) / 1000);
+        if (ageSeconds < 60) {
+          cacheStatusEl.textContent = `(cached ${ageSeconds}s ago)`;
+        } else {
+          cacheStatusEl.textContent = `(cached ${Math.round(ageSeconds / 60)}m ago)`;
+        }
+        cacheStatusEl.className = 'cache-status cached';
+      } else {
+        cacheStatusEl.textContent = '(fresh data)';
+        cacheStatusEl.className = 'cache-status fresh';
+      }
+    }
+
+    // Force refresh from Asana
+    async function forceRefresh() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      refreshBtn.disabled = true;
+      refreshBtn.classList.add('loading');
+      refreshBtn.textContent = '⏳ Refreshing...';
+      
+      try {
+        // Call the refresh endpoint
+        const response = await fetch(`/api/refresh/${currentQuarter}`, { method: 'POST' });
+        if (!response.ok) {
+          throw new Error(`Refresh failed: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        progressData = result.data;
+        
+        // Update UI
+        availableMonths = progressData.monthly.months || [];
+        renderTabs();
+        renderView();
+        updateCacheStatus();
+        
+        // Update date info
+        const dateInfo = document.getElementById('dateInfo');
+        const currentDate = new Date(progressData.currentDate);
+        dateInfo.textContent = `Last updated: ${currentDate.toLocaleString()} | Current Month: ${progressData.currentMonth}`;
+        
+      } catch (error) {
+        console.error('Error refreshing:', error);
+        alert('Failed to refresh data. Please try again.');
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.classList.remove('loading');
+        refreshBtn.textContent = '🔄 Refresh';
+      }
+    }
+
+    // Auto-refresh timer
+    const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
+    let nextRefreshTime = null;
+    let countdownInterval = null;
+
+    function updateCountdown() {
+      const timerEl = document.getElementById('autoRefreshTimer');
+      if (!nextRefreshTime) {
+        timerEl.textContent = '';
+        return;
+      }
+      
+      const remaining = Math.max(0, nextRefreshTime - Date.now());
+      const seconds = Math.floor(remaining / 1000);
+      
+      if (seconds > 60) {
+        timerEl.textContent = `| Auto-refresh in ${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+      } else {
+        timerEl.textContent = `| Auto-refresh in ${seconds}s`;
+      }
+    }
+
+    function startAutoRefresh() {
+      // Clear any existing intervals
+      if (countdownInterval) clearInterval(countdownInterval);
+      
+      // Set next refresh time
+      nextRefreshTime = Date.now() + AUTO_REFRESH_INTERVAL;
+      
+      // Update countdown every second
+      countdownInterval = setInterval(updateCountdown, 1000);
+      updateCountdown();
+      
+      // Schedule the actual refresh
+      setTimeout(async () => {
+        if (currentQuarter) {
+          // Use forceRefresh to get fresh data (bypass cache)
+          await forceRefresh();
+        }
+        // Restart the timer
+        startAutoRefresh();
+      }, AUTO_REFRESH_INTERVAL);
+    }
+
+    // Initial load
+    async function init() {
+      const quarterId = await fetchQuarters();
+      if (quarterId) {
+        await fetchProgress(quarterId);
+        updateCacheStatus();
+      }
+      
+      // Set up refresh button
+      document.getElementById('refreshBtn').addEventListener('click', async () => {
+        await forceRefresh();
+        // Reset the auto-refresh timer after manual refresh
+        startAutoRefresh();
+      });
+      
+      // Start auto-refresh countdown
+      startAutoRefresh();
+    }
+
+    init();
+  </script>
+</body>
+</html>
