@@ -236,30 +236,33 @@ export const END_OF_MONTH_DELIVERABLES = [
 // QUARTER METADATA
 // ============================================
 // Defines date ranges for each quarter
+// NOTE: Asana's completed_on.after and completed_on.before are EXCLUSIVE
+// So startDate should be the day BEFORE the quarter starts
+// And endDate should be the day AFTER the quarter ends
 
 export const QUARTER_CONFIG = {
   '2026-Q1': {
     name: 'Q1 2026',
-    startDate: '2026-01-01',
-    endDate: '2026-03-31',
+    startDate: '2025-12-31',  // Day before Jan 1
+    endDate: '2026-04-01',    // Day after Mar 31
     months: ['January', 'February', 'March'],
   },
   '2026-Q2': {
     name: 'Q2 2026',
-    startDate: '2026-04-01',
-    endDate: '2026-06-30',
+    startDate: '2026-03-31',  // Day before Apr 1
+    endDate: '2026-07-01',    // Day after Jun 30
     months: ['April', 'May', 'June'],
   },
   '2026-Q3': {
     name: 'Q3 2026',
-    startDate: '2026-07-01',
-    endDate: '2026-09-30',
+    startDate: '2026-06-30',  // Day before Jul 1
+    endDate: '2026-10-01',    // Day after Sep 30
     months: ['July', 'August', 'September'],
   },
   '2026-Q4': {
     name: 'Q4 2026',
-    startDate: '2026-10-01',
-    endDate: '2026-12-31',
+    startDate: '2026-09-30',  // Day before Oct 1
+    endDate: '2027-01-01',    // Day after Dec 31
     months: ['October', 'November', 'December'],
   },
 };

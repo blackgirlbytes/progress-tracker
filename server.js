@@ -752,6 +752,8 @@ function calculateProgress(tasks, goals) {
 }
 
 // Get month date range
+// Note: Asana's completed_on.after and completed_on.before are EXCLUSIVE
+// So we need to use the day before the start and day after the end
 function getMonthDateRange(year, monthName) {
   const monthMap = {
     'January': { month: 0, days: 31 },
@@ -771,9 +773,17 @@ function getMonthDateRange(year, monthName) {
   const monthInfo = monthMap[monthName];
   const monthNum = String(monthInfo.month + 1).padStart(2, '0');
   
+  // Calculate the day before the 1st (last day of previous month)
+  const startDate = new Date(year, monthInfo.month, 0); // Day 0 = last day of previous month
+  const startStr = startDate.toISOString().split('T')[0];
+  
+  // Calculate the day after the last day (first day of next month)
+  const endDate = new Date(year, monthInfo.month + 1, 1); // 1st of next month
+  const endStr = endDate.toISOString().split('T')[0];
+  
   return {
-    start: `${year}-${monthNum}-01`,
-    end: `${year}-${monthNum}-${monthInfo.days}`,
+    start: startStr,
+    end: endStr,
   };
 }
 
