@@ -152,6 +152,13 @@ export const MONTHLY_GOALS = {
 // Update this when you add new categories or change tagging conventions
 
 export const TAG_CATEGORY_MAP = {
+  // Build - Side projects (explicit tag takes priority)
+  '1212903104247034': { category: 'Build', deliverable: 'Side projects' }, // side project
+  
+  // Build - goose contributions
+  '1208438924809387': { category: 'Build', deliverable: 'goose contributions' }, // goose
+  '1212903104247031': { category: 'Build', deliverable: 'goose contributions' }, // goose contribution (explicit tag)
+  
   // Videos
   '1208125190486880': { category: 'Videos', deliverable: 'Tutorial videos' }, // Video Tutorial
   '1204316592156255': { category: 'Videos', deliverable: 'Tutorial videos' }, // tutorial
@@ -164,6 +171,7 @@ export const TAG_CATEGORY_MAP = {
   '1205607058770995': { category: 'Livestreams', deliverable: 'Vibe Code w/ goose streams' }, // livestream
   
   // Public Speaking (consolidated)
+  '1212892322315514': { category: 'Public Speaking', deliverable: 'CFPs (submitted or accepted)' }, // cfp
   '1204316592156237': { category: 'Public Speaking', deliverable: 'Talks delivered' }, // public speaking
   '1204316592156228': { category: 'Public Speaking', deliverable: 'Podcast recordings' }, // podcast
   '1206441534238594': { category: 'Public Speaking', deliverable: 'Talks delivered' }, // workshop
@@ -176,30 +184,40 @@ export const TAG_CATEGORY_MAP = {
   '1204316592156189': { category: 'Documentation', deliverable: 'Docs' }, // documentation
   '1204463482160284': { category: 'Documentation', deliverable: 'Docs' }, // guide
   '1207924330531310': { category: 'Documentation', deliverable: 'Docs' }, // internal devrel
-  
-  // Build - goose contributions
-  '1208438924809387': { category: 'Build', deliverable: 'goose contributions' }, // goose
-  '1212903104247031': { category: 'Build', deliverable: 'goose contributions' }, // goose contribution (explicit tag)
 };
 
 // Fallback: Tag names to Category mapping
 export const TAG_NAME_MAP = {
+  // Build
+  'side project': { category: 'Build', deliverable: 'Side projects' },
+  'goose': { category: 'Build', deliverable: 'goose contributions' },
+  'goose contribution': { category: 'Build', deliverable: 'goose contributions' },
+  
+  // Videos
   'video tutorial': { category: 'Videos', deliverable: 'Tutorial videos' },
   'tutorial': { category: 'Videos', deliverable: 'Tutorial videos' },
   'video': { category: 'Videos', deliverable: 'Shorts' },
+  
+  // Blogs
   'blog': { category: 'Blogs', deliverable: 'Blog posts' },
+  
+  // Livestreams
   'livestream': { category: 'Livestreams', deliverable: 'Vibe Code w/ goose streams' },
+  
+  // Public Speaking
+  'cfp': { category: 'Public Speaking', deliverable: 'CFPs (submitted or accepted)' },
   'public speaking': { category: 'Public Speaking', deliverable: 'Talks delivered' },
   'podcast': { category: 'Public Speaking', deliverable: 'Podcast recordings' },
   'workshop': { category: 'Public Speaking', deliverable: 'Talks delivered' },
-  'cfp': { category: 'Public Speaking', deliverable: 'CFPs (submitted or accepted)' },
+  
+  // Community
   'newsletter': { category: 'Community', deliverable: 'Newsletter issues' },
   'community': { category: 'Community', deliverable: 'Community' },
+  
+  // Documentation
   'documentation': { category: 'Documentation', deliverable: 'Docs' },
   'guide': { category: 'Documentation', deliverable: 'Docs' },
   'internal devrel': { category: 'Documentation', deliverable: 'Docs' },
-  'goose': { category: 'Build', deliverable: 'goose contributions' },
-  'goose contribution': { category: 'Build', deliverable: 'goose contributions' }, // explicit tag
 };
 
 // ============================================

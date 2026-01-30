@@ -176,21 +176,38 @@ async function rateLimitedFetch(endpoint, options = {}) {
 // ============================================
 
 async function searchCompletedTasks(startDate, endDate) {
-  const url = `/workspaces/${WORKSPACE_ID}/tasks/search?projects.any=${PROJECT_ID}&completed=true&completed_on.after=${startDate}&completed_on.before=${endDate}&opt_fields=name,completed_at,tags,tags.name,tags.gid,assignee,assignee.name,followers,followers.name&limit=100`;
-  const response = await rateLimitedFetch(url);
-  const tasks = response.data || [];
+  let allTasks = [];
+  let offset = null;
+  
+  // Paginate through all results
+  do {
+    const offsetParam = offset ? `&offset=${offset}` : '';
+    const url = `/workspaces/${WORKSPACE_ID}/tasks/search?projects.any=${PROJECT_ID}&completed=true&completed_on.after=${startDate}&completed_on.before=${endDate}&opt_fields=name,completed_at,tags,tags.name,tags.gid,assignee,assignee.name,followers,followers.name&limit=100${offsetParam}`;
+    const response = await rateLimitedFetch(url);
+    const tasks = response.data || [];
+    allTasks = allTasks.concat(tasks);
+    
+    // Check for next page
+    offset = response.next_page?.offset || null;
+    
+    if (offset) {
+      console.log(`📄 Fetching next page of tasks (${allTasks.length} so far)...`);
+    }
+  } while (offset);
   
   // Filter out tasks from excluded assignees
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = allTasks.filter(task => {
     const assigneeName = task.assignee?.name;
     if (!assigneeName) return true; // Include unassigned tasks
     return !EXCLUDED_ASSIGNEES.includes(assigneeName);
   });
   
-  const excludedCount = tasks.length - filteredTasks.length;
+  const excludedCount = allTasks.length - filteredTasks.length;
   if (excludedCount > 0) {
     console.log(`🚫 Filtered out ${excludedCount} tasks from excluded assignees`);
   }
+  
+  console.log(`✅ Found ${filteredTasks.length} tasks for ${startDate} to ${endDate}`);
   
   return filteredTasks;
 }
@@ -384,6 +401,7 @@ const AGENTIC_PATTERNS = {
   'Context Engineering': [/context\s*engineer/i, /agents\.md/i, /goosehints/i],
   'ai-rules': [/ai-rules/i, /ai\s*rules/i],
   'Plans': [/\bplans?\b/i, /planning\s*mode/i],
+  'Beads': [/\bbeads?\b/i],  // Beads agentic pattern
 };
 
 // Categories that count as "content" for agentic patterns
@@ -425,17 +443,47 @@ function categorizeTask(task) {
   const taskNameOriginal = task.name; // Keep original for regex matching
   
   // ============================================
+  // PHASE 0: Priority tags (check these FIRST regardless of order)
+  // ============================================
+  // These explicit tags take absolute priority over other categorizations
+  
+  // Check for explicit "side project" tag first
+  const hasSideProjectTag = tags.some(t => t.gid === '1212903104247034' || t.name?.toLowerCase() === 'side project');
+  if (hasSideProjectTag) {
+    return { category: 'Build', deliverable: 'Side projects' };
+  }
+  
+  // Check for explicit "cfp" tag
+  const hasCfpTag = tags.some(t => t.gid === '1212892322315514' || t.name?.toLowerCase() === 'cfp');
+  if (hasCfpTag) {
+    return { category: 'Public Speaking', deliverable: 'CFPs (submitted or accepted)' };
+  }
+  
+  // Check for explicit "goose contribution" tag (not generic "goose" tag)
+  const hasGooseContributionTag = tags.some(t => t.gid === '1212903104247031' || t.name?.toLowerCase() === 'goose contribution');
+  if (hasGooseContributionTag) {
+    return { category: 'Build', deliverable: 'goose contributions' };
+  }
+  
+  // ============================================
   // PHASE 1: Tag-based categorization with validation
   // ============================================
   for (const tag of tags) {
     if (TAG_CATEGORY_MAP[tag.gid]) {
       const mapping = TAG_CATEGORY_MAP[tag.gid];
       
+      // Skip tags already handled in Phase 0
+      if (tag.gid === '1212903104247034' || tag.gid === '1212892322315514' || tag.gid === '1212903104247031') {
+        continue;
+      }
+      
       // Special handling for video tag - this confirms it's actually a video
       if (tag.gid === '1204316592156190') { // video tag
         const hasTutorialTag = tags.some(t => t.gid === '1208125190486880' || t.gid === '1204316592156255');
-        // Check for shorts first (but not if it's scheduling/distribution)
-        if ((taskName.includes('[shorts]') || taskName.includes('quick tip') || /under\s*(60|1\s*min)/i.test(taskName)) &&
+        // Check for shorts first - "short" in name or other short indicators
+        // (but not if it's scheduling/distribution)
+        if ((taskName.includes('short') || taskName.includes('[shorts]') || taskName.includes('quick tip') || /under\s*(60|1\s*min)/i.test(taskName)) &&
+            !taskName.includes('shortcut') &&
             !isExcluded(taskNameOriginal, 'Shorts')) {
           return { category: 'Videos', deliverable: 'Shorts' };
         }
