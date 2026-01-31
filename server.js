@@ -176,33 +176,62 @@ async function rateLimitedFetch(endpoint, options = {}) {
 // ============================================
 
 async function searchCompletedTasks(startDate, endDate) {
-  let allTasks = [];
-  let offset = null;
+  // Asana's search API has a 100-task limit without pagination
+  // To work around this, we query in weekly chunks to ensure we get all tasks
   
-  // Paginate through all results
-  do {
-    const offsetParam = offset ? `&offset=${offset}` : '';
-    const url = `/workspaces/${WORKSPACE_ID}/tasks/search?projects.any=${PROJECT_ID}&completed=true&completed_on.after=${startDate}&completed_on.before=${endDate}&opt_fields=name,completed_at,tags,tags.name,tags.gid,assignee,assignee.name,followers,followers.name&limit=100${offsetParam}`;
-    const response = await rateLimitedFetch(url);
-    const tasks = response.data || [];
-    allTasks = allTasks.concat(tasks);
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+  
+  let allTasks = [];
+  
+  // If date range is more than 7 days, split into weekly chunks
+  if (daysDiff > 7) {
+    console.log(`📅 Date range is ${daysDiff} days, splitting into weekly chunks...`);
     
-    // Check for next page
-    offset = response.next_page?.offset || null;
-    
-    if (offset) {
-      console.log(`📄 Fetching next page of tasks (${allTasks.length} so far)...`);
+    let currentStart = new Date(start);
+    while (currentStart < end) {
+      let currentEnd = new Date(currentStart);
+      currentEnd.setDate(currentEnd.getDate() + 7);
+      if (currentEnd > end) currentEnd = new Date(end);
+      
+      const chunkStartStr = currentStart.toISOString().split('T')[0];
+      const chunkEndStr = currentEnd.toISOString().split('T')[0];
+      
+      const url = `/workspaces/${WORKSPACE_ID}/tasks/search?projects.any=${PROJECT_ID}&completed=true&completed_on.after=${chunkStartStr}&completed_on.before=${chunkEndStr}&opt_fields=name,completed_at,tags,tags.name,tags.gid,assignee,assignee.name,followers,followers.name&limit=100`;
+      const response = await rateLimitedFetch(url);
+      const tasks = response.data || [];
+      
+      console.log(`  📦 ${chunkStartStr} to ${chunkEndStr}: ${tasks.length} tasks`);
+      allTasks = allTasks.concat(tasks);
+      
+      currentStart = new Date(currentEnd);
     }
-  } while (offset);
+  } else {
+    // Single query for short date ranges
+    const url = `/workspaces/${WORKSPACE_ID}/tasks/search?projects.any=${PROJECT_ID}&completed=true&completed_on.after=${startDate}&completed_on.before=${endDate}&opt_fields=name,completed_at,tags,tags.name,tags.gid,assignee,assignee.name,followers,followers.name&limit=100`;
+    const response = await rateLimitedFetch(url);
+    allTasks = response.data || [];
+  }
+  
+  // Remove duplicates (in case a task appears in multiple chunks due to boundary conditions)
+  const uniqueTasks = [];
+  const seenGids = new Set();
+  for (const task of allTasks) {
+    if (!seenGids.has(task.gid)) {
+      seenGids.add(task.gid);
+      uniqueTasks.push(task);
+    }
+  }
   
   // Filter out tasks from excluded assignees
-  const filteredTasks = allTasks.filter(task => {
+  const filteredTasks = uniqueTasks.filter(task => {
     const assigneeName = task.assignee?.name;
     if (!assigneeName) return true; // Include unassigned tasks
     return !EXCLUDED_ASSIGNEES.includes(assigneeName);
   });
   
-  const excludedCount = allTasks.length - filteredTasks.length;
+  const excludedCount = uniqueTasks.length - filteredTasks.length;
   if (excludedCount > 0) {
     console.log(`🚫 Filtered out ${excludedCount} tasks from excluded assignees`);
   }
